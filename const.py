@@ -1,0 +1,3 @@
+DATA_FOLDER = 'data'
+IMG_SIZE = 256
+PROCESSED_FOLDER = 'processed'
