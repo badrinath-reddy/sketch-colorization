@@ -7,8 +7,9 @@ import cv2
 
 
 class Data(Dataset):
-    def __init__(self, transform=None):
+    def __init__(self, is_train=True, transform=None):
         self.transform = transform
+        self.is_train = is_train
         self.files = listdir(DATA_FOLDER + '/' + PROCESSED_FOLDER)
 
     def __len__(self):
@@ -30,7 +31,7 @@ class Data(Dataset):
         return img, label
 
 
-def get_data_loader(batch_size, shuffle=True):
+def get_data_loader(is_train, batch_size, shuffle=True):
     transform = transforms.Compose([
         transforms.ToPILImage(),
         transforms.ToTensor(),
@@ -41,6 +42,6 @@ def get_data_loader(batch_size, shuffle=True):
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
     transform = None
-    data = Data(transform)
+    data = Data(is_train, transform)
     data_loader = DataLoader(data, batch_size=batch_size, shuffle=shuffle)
     return data_loader
