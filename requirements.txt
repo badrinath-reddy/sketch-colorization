@@ -1,2 +1,6 @@
 opencv-python
 numpy
+torch
+torchvision
+torchaudio
+plotly
