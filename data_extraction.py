@@ -7,7 +7,7 @@ folders = listdir(DATA_FOLDER)
 
 i = 0
 for folder in folders:
-    if folder == '.DS_Store':
+    if folder == '.DS_Store' or folder == PROCESSED_FOLDER:
         continue
     files = listdir(DATA_FOLDER + '/' + folder)
     for file in files:
@@ -23,3 +23,7 @@ for folder in folders:
 
         cv2.imwrite(DATA_FOLDER + '/' + PROCESSED_FOLDER +
                     '/' + str(i) + '.jpg', final_img)
+
+
+print('Data extraction completed successfully')
+print('Total images: ', i)
