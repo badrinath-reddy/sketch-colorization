@@ -3,6 +3,7 @@ from torch.utils.data import Dataset
 from torchvision import transforms
 from const import DATA_FOLDER, PROCESSED_FOLDER, IMG_SIZE
 from os import listdir
+import torch
 import cv2
 
 
@@ -25,13 +26,18 @@ class Data(Dataset):
         img = img.transpose(2, 0, 1)
         label = label.transpose(2, 0, 1)
 
+        # convert to tensor with float
+        img = torch.from_numpy(img).float()
+        label = torch.from_numpy(label).float()
+
         if self.transform:
             img = self.transform(img)
             label = self.transform(label)
+
         return img, label
 
 
-def get_data_loader(is_train, batch_size, shuffle=True):
+def get_data_loader(batch_size, shuffle=True, is_train=True):
     transform = transforms.Compose([
         transforms.ToPILImage(),
         transforms.ToTensor(),
