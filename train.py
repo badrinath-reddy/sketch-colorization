@@ -97,7 +97,7 @@ for i in range(opt.epoch):
         writer.add_scalar('Loss/Generator', loss_G, step)
         writer.add_scalar('Loss/Descriminator', loss_D, step)
 
-        if step % 1 == 0:
+        if step % 100 == 0:
             writer.add_images('Images/Input', input, step)
             writer.add_images('Images/Output', output, step)
             writer.add_images('Images/Generator', generator_output, step)
