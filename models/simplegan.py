@@ -12,7 +12,7 @@ class UpSampleBlock(nn.Module):
             layers.append(nn.Dropout(dropout))
         self.model = nn.Sequential(*layers)
 
-    def forward(self, x, skip):
+    def forward(self, x, skip):  # Add skip after the layer
         x = self.model(x)
         x = torch.cat((x, skip), dim=1)
         return x
@@ -59,13 +59,13 @@ class Generator(nn.Module):
         self.down7 = DownSampleBlock(512, 512)  # 2, 2, 512
         self.down8 = DownSampleBlock(512, 512)  # 1, 1, 512
 
-        self.up1 = UpSampleBlock(512, 512, dropout=0.5)
-        self.up2 = UpSampleBlock(1024, 512, dropout=0.5)
-        self.up3 = UpSampleBlock(1024, 512, dropout=0.5)
-        self.up4 = UpSampleBlock(1024, 512)
-        self.up5 = UpSampleBlock(1024, 256)
-        self.up6 = UpSampleBlock(512, 128)
-        self.up7 = UpSampleBlock(256, 64)
+        self.up1 = UpSampleBlock(512, 512, dropout=0.5)  # 2, 2, 1024
+        self.up2 = UpSampleBlock(1024, 512, dropout=0.5)  # 4, 4, 1024
+        self.up3 = UpSampleBlock(1024, 512, dropout=0.5)  # 8, 8, 1024
+        self.up4 = UpSampleBlock(1024, 512)  # 16, 16, 1024
+        self.up5 = UpSampleBlock(1024, 256)  # 32, 32, 512
+        self.up6 = UpSampleBlock(512, 128)  # 64, 64, 256
+        self.up7 = UpSampleBlock(256, 64)  # 128, 128, 128
         self.up8 = nn.Sequential(nn.ConvTranspose2d(
             128, 3, kernel_size=4, stride=2, padding=1), nn.Tanh())  # 256, 256, 3
 
