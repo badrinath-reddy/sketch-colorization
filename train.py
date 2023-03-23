@@ -47,16 +47,37 @@ optimizer_D = torch.optim.Adam(
 
 dataloader = get_data_loader(opt.batch_size)
 
-input, output = next(iter(dataloader))
 
-input = input.to(device)
-output = output.to(device)
+for i in range(opt.epoch):
+    for j, (input, output) in enumerate(dataloader):
 
-fake = generator(input)
+        input = input.to(device)
+        output = output.to(device)
 
-print(fake.shape)
+        valid_gt = torch.ones(input.size(0), 1, 16, 16).to(device)
+        fake_gt = torch.zeros(input.size(0), 1, 16, 16).to(device)
 
-vals = descriminator(input, output)
-vals2 = descriminator(input, fake)
+        optimizer_G.zero_grad()
 
-print(vals.shape, vals2.shape)
+        fake = generator(input)
+        fake_values = descriminator(input, fake)
+
+        loss_G = ganloss(fake_values, valid_gt) + \
+            lambda_pixel * descloss(fake, output)
+
+        loss_G.backward()
+        optimizer_G.step()
+
+        optimizer_D.zero_grad()
+
+        real_values = descriminator(input, output)
+        fake_values = descriminator(input, fake.detach())
+
+        loss_D = 0.5 * (descloss(real_values, valid_gt) +
+                        descloss(fake_values, fake_gt))
+
+        loss_D.backward()
+        optimizer_D.step()
+        break
+
+    break
