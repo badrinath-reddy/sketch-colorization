@@ -22,14 +22,6 @@ class Data(Dataset):
         img = full_image[:, :IMG_SIZE]
         label = full_image[:, IMG_SIZE:]
 
-        # convert to [channel, height, width]
-        img = img.transpose(2, 0, 1)
-        label = label.transpose(2, 0, 1)
-
-        # convert to tensor with float
-        img = torch.from_numpy(img).float()
-        label = torch.from_numpy(label).float()
-
         if self.transform:
             img = self.transform(img)
             label = self.transform(label)
@@ -47,7 +39,6 @@ def get_data_loader(batch_size, shuffle=True, is_train=True):
         # transforms.RandomCrop((IMG_SIZE, IMG_SIZE)),
         transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
     ])
-    transform = None
     data = Data(is_train, transform)
     data_loader = DataLoader(data, batch_size=batch_size, shuffle=shuffle)
     return data_loader

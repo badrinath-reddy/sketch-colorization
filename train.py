@@ -4,6 +4,7 @@ from models.simplegan import Generator, Discriminator
 from utils import *
 from data_loader import *
 import os
+from torch.utils.tensorboard import SummaryWriter
 
 import argparse
 
@@ -30,14 +31,30 @@ print(opt)
 
 device = get_device()
 
+writer = SummaryWriter()
 
 ganloss = nn.MSELoss()
 descloss = nn.L1Loss()
+
 
 lambda_pixel = 100
 
 generator = Generator().to(device)
 descriminator = Discriminator().to(device)
+
+
+dataloader = get_data_loader(opt.batch_size)
+
+# Model to Tensorboard
+input, _ = next(iter(dataloader))
+input = input.to(device)
+
+with torch.no_grad():
+    writer.add_graph(generator, input)
+    writer.add_graph(descriminator, (input, input))
+
+
+writer.add_graph(generator, input)
 
 optimizer_G = torch.optim.Adam(
     generator.parameters(), lr=opt.lr, betas=(opt.b1, opt.b2))
@@ -45,11 +62,10 @@ optimizer_D = torch.optim.Adam(
     descriminator.parameters(), lr=opt.lr, betas=(opt.b1, opt.b2))
 
 
-dataloader = get_data_loader(opt.batch_size)
-
-
+step = 0
 for i in range(opt.epoch):
     for j, (input, output) in enumerate(dataloader):
+        step += 1
 
         input = input.to(device)
         output = output.to(device)
@@ -59,11 +75,11 @@ for i in range(opt.epoch):
 
         optimizer_G.zero_grad()
 
-        fake = generator(input)
-        fake_values = descriminator(input, fake)
+        generator_output = generator(input)
+        fake_values = descriminator(input, generator_output)
 
         loss_G = ganloss(fake_values, valid_gt) + \
-            lambda_pixel * descloss(fake, output)
+            lambda_pixel * descloss(fake_values, valid_gt)
 
         loss_G.backward()
         optimizer_G.step()
@@ -71,13 +87,17 @@ for i in range(opt.epoch):
         optimizer_D.zero_grad()
 
         real_values = descriminator(input, output)
-        fake_values = descriminator(input, fake.detach())
 
         loss_D = 0.5 * (descloss(real_values, valid_gt) +
-                        descloss(fake_values, fake_gt))
+                        descloss(fake_values.detach(), fake_gt))
 
         loss_D.backward()
         optimizer_D.step()
-        break
 
-    break
+        writer.add_scalar('Loss/Generator', loss_G, step)
+        writer.add_scalar('Loss/Descriminator', loss_D, step)
+
+        if step % 1 == 0:
+            writer.add_images('Images/Input', input, step)
+            writer.add_images('Images/Output', output, step)
+            writer.add_images('Images/Generator', generator_output, step)
