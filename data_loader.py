@@ -19,8 +19,8 @@ class Data(Dataset):
     def __getitem__(self, idx):
         full_image = cv2.imread(
             DATA_FOLDER + '/' + PROCESSED_FOLDER + '/' + self.files[idx])
-        img = full_image[:, :IMG_SIZE]
-        label = full_image[:, IMG_SIZE:]
+        img = full_image[:, IMG_SIZE:]
+        label = full_image[:, :IMG_SIZE]
 
         if self.transform:
             img = self.transform(img)
