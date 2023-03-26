@@ -5,6 +5,7 @@ __pycache__/
 runs/
 saved_models/
 data/
+images/
 
 # C extensions
 *.so
