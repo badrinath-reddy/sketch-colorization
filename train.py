@@ -46,8 +46,12 @@ descriminator = Discriminator().to(device)
 dataloader = get_data_loader(opt.batch_size)
 
 # Model to Tensorboard
-input, _ = next(iter(dataloader))
+input, output = next(iter(dataloader))
 input = input.to(device)
+output = output.to(device)
+
+with torch.no_grad():
+    desc_shape = descriminator(input, output).shape
 
 with torch.no_grad():
     writer.add_graph(generator, input)
@@ -70,8 +74,8 @@ for i in range(opt.epoch):
         input = input.to(device)
         output = output.to(device)
 
-        valid_gt = torch.ones(input.size(0), 1, 16, 16).to(device)
-        fake_gt = torch.zeros(input.size(0), 1, 16, 16).to(device)
+        valid_gt = torch.ones(desc_shape).to(device)
+        fake_gt = torch.zeros(desc_shape).to(device)
 
         optimizer_G.zero_grad()
 
@@ -94,8 +98,10 @@ for i in range(opt.epoch):
         loss_D.backward()
         optimizer_D.step()
 
-        writer.add_scalar('Loss/Generator', loss_G, step)
-        writer.add_scalar('Loss/Descriminator', loss_D, step)
+        if step % 10 == 0:
+            print(f"Epoch: {i} Step: {j} Loss_G: {loss_G} Loss_D: {loss_D}")
+            writer.add_scalar('Loss/Generator', loss_G, step)
+            writer.add_scalar('Loss/Descriminator', loss_D, step)
 
         if step % 100 == 0:
             writer.add_images('Images/Input', input, step)
