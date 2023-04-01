@@ -188,9 +188,32 @@ for epoch in range(opt.epoch, opt.n_epochs):
         if batches_done % opt.sample_interval == 0:
             writer.add_scalar('Loss/Generator', loss_G, batches_done)
             writer.add_scalar('Loss/Descriminator', loss_D, batches_done)
-            writer.add_images('Images/Input', input, batches_done)
-            writer.add_images('Images/Output', output, batches_done)
+            writer.add_images('Images/Input', real_A, batches_done)
+            writer.add_images('Images/Output', real_B, batches_done)
             writer.add_images('Images/Generator', fake_B, batches_done)
+
+            with torch.no_grad():
+                real_A, real_B = next(iter(val_dataloader))
+                real_A = real_A.to(device)
+                real_B = real_B.to(device)
+
+                fake_B = generator(real_A)
+                pred_fake = discriminator(fake_B, real_A)
+                loss_GAN = criterion_GAN(pred_fake, valid)
+                loss_pixel = criterion_pixelwise(fake_B, real_B)
+                loss_G = loss_GAN + lambda_pixel * loss_pixel
+
+                pred_real = discriminator(real_B, real_A)
+                loss_real = criterion_GAN(pred_real, valid)
+                pred_fake = discriminator(fake_B.detach(), real_A)
+                loss_fake = criterion_GAN(pred_fake, fake)
+                loss_D = 0.5 * (loss_real + loss_fake)
+
+            writer.add_scalar('Loss/Generator_val', loss_G, batches_done)
+            writer.add_scalar('Loss/Descriminator_val', loss_D, batches_done)
+            writer.add_images('Images/Generator_val', fake_B, batches_done)
+            writer.add_images('Images/Output_val', real_B, batches_done)
+            writer.add_images('Images/Input_val', real_A, batches_done)
 
     if opt.checkpoint_interval != -1 and epoch % opt.checkpoint_interval == 0:
         # Save model checkpoints
