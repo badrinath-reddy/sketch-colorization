@@ -1,11 +1,8 @@
 import argparse
 import os
-import numpy as np
 import time
 import datetime
 import sys
-from torchvision.utils import save_image
-from torch.autograd import Variable
 from models.pix2pix import *
 from data_loader import *
 import torch
