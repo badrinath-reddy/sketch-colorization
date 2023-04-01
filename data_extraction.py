@@ -2,6 +2,7 @@ from os import listdir
 from const import DATA_FOLDER, PROCESSED_FOLDER, IMG_SIZE
 from edge_detection import edge_detection
 import cv2
+import random
 
 folders = listdir(DATA_FOLDER)
 
@@ -23,6 +24,22 @@ for folder in folders:
 
         cv2.imwrite(DATA_FOLDER + '/' + PROCESSED_FOLDER +
                     '/' + str(i) + '.jpg', final_img)
+
+all_idx = [str(i) + ".jpg" for i in range(1, i + 1)]
+
+random.shuffle(all_idx)
+train_idx = all_idx[:int(0.8 * i)]
+test_idx = all_idx[int(0.8 * i):int(0.9 * i)]
+val_idx = all_idx[int(0.9 * i):]
+
+with open(DATA_FOLDER + '/' + PROCESSED_FOLDER + '/' + 'train.txt', 'w') as f:
+    f.write(str(train_idx))
+
+with open(DATA_FOLDER + '/' + PROCESSED_FOLDER + '/' + 'test.txt', 'w') as f:
+    f.write(str(test_idx))
+
+with open(DATA_FOLDER + '/' + PROCESSED_FOLDER + '/' + 'val.txt', 'w') as f:
+    f.write(str(val_idx))
 
 
 print('Data extraction completed successfully')
