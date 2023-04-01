@@ -41,7 +41,7 @@ parser.add_argument(
     "--sample_interval", type=int, default=100, help="interval between sampling of images from generators"
 )
 parser.add_argument("--checkpoint_interval", type=int,
-                    default=-1, help="interval between model checkpoints")
+                    default=1, help="interval between model checkpoints")
 opt = parser.parse_args()
 print(opt)
 
@@ -90,9 +90,8 @@ optimizer_G = torch.optim.Adam(
 optimizer_D = torch.optim.Adam(
     discriminator.parameters(), lr=opt.lr, betas=(opt.b1, opt.b2))
 
-dataloader = get_data_loader(opt.batch_size)
-
-val_dataloader = get_data_loader(opt.batch_size)
+dataloader = get_data_loader(opt.batch_size, split='train')
+val_dataloader = get_data_loader(opt.batch_size, split='val')
 
 
 with torch.no_grad():
@@ -104,17 +103,6 @@ with torch.no_grad():
     writer.add_graph(discriminator, (input, output))
 
 
-def sample_images(batches_done):
-    """Saves a generated sample from the validation set"""
-    real_A, real_B = next(iter(val_dataloader))
-    real_A = real_A.to(device)
-    real_B = real_B.to(device)
-    fake_B = generator(real_A)
-    img_sample = torch.cat((real_A.data, fake_B.data, real_B.data), -2)
-    save_image(img_sample, "images/%s/%s.png" %
-               (opt.dataset_name, batches_done), nrow=5, normalize=True)
-
-
 # ----------
 #  Training
 # ----------
@@ -123,7 +111,6 @@ prev_time = time.time()
 
 for epoch in range(opt.epoch, opt.n_epochs):
     for i, (real_A, real_B) in enumerate(dataloader):
-
         real_A = real_A.to(device)
         real_B = real_B.to(device)
 
@@ -207,7 +194,6 @@ for epoch in range(opt.epoch, opt.n_epochs):
             writer.add_images('Images/Input', input, batches_done)
             writer.add_images('Images/Output', output, batches_done)
             writer.add_images('Images/Generator', fake_B, batches_done)
-            sample_images(batches_done)
 
     if opt.checkpoint_interval != -1 and epoch % opt.checkpoint_interval == 0:
         # Save model checkpoints

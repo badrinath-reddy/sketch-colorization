@@ -24,8 +24,6 @@ class Data(Dataset):
         self.files = [DATA_FOLDER + '/' +
                       PROCESSED_FOLDER + '/' + img for img in imgs]
 
-        print(self.files[0])
-
 
     def __len__(self):
         return len(self.files)
