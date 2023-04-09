@@ -42,8 +42,8 @@ parser.add_argument("--checkpoint_interval", type=int,
 opt = parser.parse_args()
 print(opt)
 
-os.makedirs("images/%s" % opt.dataset_name, exist_ok=True)
-os.makedirs("saved_models/%s" % opt.dataset_name, exist_ok=True)
+os.makedirs("images/%s" % opt.model_name, exist_ok=True)
+os.makedirs("saved_models/%s" % opt.model_name, exist_ok=True)
 
 device = get_device()
 
@@ -73,9 +73,9 @@ criterion_pixelwise.to(device)
 if opt.epoch != 0:
     # Load pretrained models
     generator.load_state_dict(torch.load(
-        "saved_models/%s/generator_%d.pth" % (opt.dataset_name, opt.epoch)))
+        "saved_models/%s/generator_%d.pth" % (opt.model_name, opt.epoch)))
     discriminator.load_state_dict(torch.load(
-        "saved_models/%s/discriminator_%d.pth" % (opt.dataset_name, opt.epoch)))
+        "saved_models/%s/discriminator_%d.pth" % (opt.model_name, opt.epoch)))
 else:
     # Initialize weights
     generator.apply(weights_init_normal)
@@ -188,9 +188,12 @@ for epoch in range(opt.epoch, opt.n_epochs):
         if batches_done % opt.sample_interval == 0:
             writer.add_scalar('Loss/Generator', loss_G, batches_done)
             writer.add_scalar('Loss/Descriminator', loss_D, batches_done)
-            writer.add_images('Images/Input', real_A, batches_done)
-            writer.add_images('Images/Output', real_B, batches_done)
-            writer.add_images('Images/Generator', fake_B, batches_done)
+            writer.add_images(
+                'Images/Input', denormalize(real_A), batches_done)
+            writer.add_images(
+                'Images/Output', denormalize(real_B), batches_done)
+            writer.add_images('Images/Generator',
+                              denormalize(fake_B), batches_done)
 
             with torch.no_grad():
                 real_A, real_B = next(iter(val_dataloader))
@@ -211,13 +214,16 @@ for epoch in range(opt.epoch, opt.n_epochs):
 
             writer.add_scalar('Loss/Generator_val', loss_G, batches_done)
             writer.add_scalar('Loss/Descriminator_val', loss_D, batches_done)
-            writer.add_images('Images/Generator_val', fake_B, batches_done)
-            writer.add_images('Images/Output_val', real_B, batches_done)
-            writer.add_images('Images/Input_val', real_A, batches_done)
+            writer.add_images('Images/Generator_val',
+                              denormalize(fake_B), batches_done)
+            writer.add_images('Images/Output_val',
+                              denormalize(real_B), batches_done)
+            writer.add_images('Images/Input_val',
+                              denormalize(real_A), batches_done)
 
     if opt.checkpoint_interval != -1 and epoch % opt.checkpoint_interval == 0:
         # Save model checkpoints
         torch.save(generator.state_dict(),
-                   "saved_models/%s/generator_%d.pth" % (opt.dataset_name, epoch))
+                   "saved_models/%s/generator_%d.pth" % (opt.model_name, epoch))
         torch.save(discriminator.state_dict(
-        ), "saved_models/%s/discriminator_%d.pth" % (opt.dataset_name, epoch))
+        ), "saved_models/%s/discriminator_%d.pth" % (opt.model_name, epoch))

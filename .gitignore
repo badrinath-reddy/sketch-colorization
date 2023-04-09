@@ -6,6 +6,7 @@ runs/
 saved_models/
 data/
 images/
+test.ipynb
 
 # C extensions
 *.so
