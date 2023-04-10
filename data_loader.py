@@ -52,7 +52,7 @@ def get_data_loader(batch_size, shuffle=True, split="train"):
     transform = transforms.Compose([
         transforms.RandomHorizontalFlip(),
         transforms.RandomVerticalFlip(),
-        transforms.RandomRotation((0, 360)),
+        transforms.RandomRotation((-30, 30)),
         transforms.RandomCrop((IMG_SIZE, IMG_SIZE)),
     ])
     data = Data(split, transform)
