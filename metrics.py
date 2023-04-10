@@ -15,8 +15,8 @@ def ssim(img1, img2):
 
 
 def psnr(img1, img2):
-    img1 = denormalize(img1)
-    img2 = denormalize(img2)
+    img1 = denormalize(img1) * 255
+    img2 = denormalize(img2) * 255
     img1 = img1.permute(1, 2, 0).numpy()
     img2 = img2.permute(1, 2, 0).numpy()
     return cv2.PSNR(img1, img2)
