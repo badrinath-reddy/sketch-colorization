@@ -22,8 +22,7 @@ for folder in folders:
 
         final_img = cv2.hconcat([original_img, img])
 
-        cv2.imwrite(DATA_FOLDER + '/' + PROCESSED_FOLDER +
-                    '/' + str(i) + '.jpg', final_img)
+        cv2.imwrite(DATA_FOLDER + '/' + PROCESSED_FOLDER + '/' + str(i) + '.jpg', final_img)
 
 all_idx = [str(i) + ".jpg" for i in range(1, i + 1)]
 

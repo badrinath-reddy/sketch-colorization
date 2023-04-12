@@ -36,8 +36,7 @@ def dodgeV2(img):
 def anisotropic_diffusion(img):
     original_img = img.copy()
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    img = ad(img, niter=5, kappa=50, gamma=0.1,
-                                option=1, voxelspacing=None)
+    img = ad(img, niter=5, kappa=50, gamma=0.1, option=1, voxelspacing=None)
     img = normalize(img)
     thresh = threshold_otsu(img)
     img = img > thresh
