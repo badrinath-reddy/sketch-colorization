@@ -6,3 +6,6 @@ torchaudio
 plotly
 tensorboard
 piqa
+scikit-image
+matplotlib
+medpy
