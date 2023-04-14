@@ -1,3 +1,5 @@
+import os
+os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 import argparse
 import os
 import time
@@ -5,11 +7,13 @@ import datetime
 import sys
 from models.pix2pix import *
 from data_loader import *
-from metrics import *
+from loss import *
 from torchvision.utils import save_image
 import torch
 from torch.utils.tensorboard import SummaryWriter
 from utils import *
+
+
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--epoch", type=int, default=0, help="epoch to start training from")
@@ -29,27 +33,27 @@ parser.add_argument("--checkpoint_interval", type=int, default=5, help="interval
 opt = parser.parse_args()
 print(opt)
 
+writer = SummaryWriter()
+
 os.makedirs("images/%s" % opt.model_name, exist_ok=True)
 os.makedirs("saved_models/%s" % opt.model_name, exist_ok=True)
 
 device = get_device()
 
 # Loss functions
-criterion_GAN = l2()
-criterion_pixelwise = l1()
+gen_loss = GeneratorLoss()
+desc_loss = DiscriminatorLoss()
 
-# Loss weight of L1 pixel-wise loss between translated image and real image
-lambda_pixel = 100
 
 # Initialize generator and discriminator
 generator = GeneratorUNet()
 discriminator = Discriminator()
 
-writer = SummaryWriter()
-
 
 generator = generator.to(device)
 discriminator = discriminator.to(device)
+gen_loss = gen_loss.to(device)
+desc_loss = desc_loss.to(device)
 
 
 if opt.epoch != 0:
@@ -81,13 +85,12 @@ def sample_images(batches_done):
     save_image(img_sample, "images/%s/%s.png" % (opt.model_name, batches_done), nrow=5, normalize=True)
 
 
-with torch.no_grad():
-    input, output = next(iter(dataloader))
-    input = input.to(device)
-    output = output.to(device)
-    desc_shape = discriminator(input, output).shape
-    writer.add_graph(generator, input)
-    writer.add_graph(discriminator, (input, output))
+# with torch.no_grad():
+#     input, output = next(iter(dataloader))
+#     input = input.to(device)
+#     output = output.to(device)
+#     writer.add_graph(generator, input)
+#     writer.add_graph(discriminator, (input, output))
 
 
 # ----------
@@ -101,10 +104,6 @@ for epoch in range(opt.epoch, opt.n_epochs):
         real_A = real_A.to(device)
         real_B = real_B.to(device)
 
-        # Adversarial ground truths
-        valid = torch.ones(real_A.shape[0], desc_shape[1], desc_shape[2], desc_shape[3]).to(device)
-        fake = torch.zeros(real_A.shape[0], desc_shape[1], desc_shape[2], desc_shape[3]).to(device)
-
         # ------------------
         #  Train Generators
         # ------------------
@@ -114,15 +113,12 @@ for epoch in range(opt.epoch, opt.n_epochs):
         # GAN loss
         fake_B = generator(real_A)
         pred_fake = discriminator(fake_B, real_A)
-        loss_GAN = criterion_GAN(pred_fake, valid)
-        # Pixel-wise loss
-        loss_pixel = criterion_pixelwise(fake_B, real_B)
 
         # Total loss
-        loss_G = loss_GAN + lambda_pixel * loss_pixel
+        loss_G = gen_loss(fake_B, pred_fake, real_B)
 
         loss_G.backward()
-
+        
         optimizer_G.step()
 
         # ---------------------
@@ -133,14 +129,9 @@ for epoch in range(opt.epoch, opt.n_epochs):
 
         # Real loss
         pred_real = discriminator(real_B, real_A)
-        loss_real = criterion_GAN(pred_real, valid)
-
-        # Fake loss
-        # pred_fake = discriminator(fake_B.detach(), real_A)
-        loss_fake = criterion_GAN(pred_fake.detach(), fake)
 
         # Total loss
-        loss_D = 0.5 * (loss_real + loss_fake)
+        loss_D = desc_loss(pred_real, pred_fake.detach())
 
         loss_D.backward()
         optimizer_D.step()
@@ -157,7 +148,7 @@ for epoch in range(opt.epoch, opt.n_epochs):
 
         # Print log
         sys.stdout.write(
-            "\r[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f, pixel: %f, adv: %f] ETA: %s"
+            "\r[Epoch %d/%d] [Batch %d/%d] [D loss: %f] [G loss: %f] ETA: %s"
             % (
                 epoch,
                 opt.n_epochs,
@@ -165,8 +156,6 @@ for epoch in range(opt.epoch, opt.n_epochs):
                 len(dataloader),
                 loss_D.item(),
                 loss_G.item(),
-                loss_pixel.item(),
-                loss_GAN.item(),
                 time_left,
             )
         )
@@ -187,15 +176,10 @@ for epoch in range(opt.epoch, opt.n_epochs):
 
                 fake_B = generator(real_A)
                 pred_fake = discriminator(fake_B, real_A)
-                loss_GAN = criterion_GAN(pred_fake, valid)
-                loss_pixel = criterion_pixelwise(fake_B, real_B)
-                loss_G = loss_GAN + lambda_pixel * loss_pixel
+                loss_G = gen_loss(fake_B, pred_fake, real_B)
 
                 pred_real = discriminator(real_B, real_A)
-                loss_real = criterion_GAN(pred_real, valid)
-                pred_fake = discriminator(fake_B.detach(), real_A)
-                loss_fake = criterion_GAN(pred_fake, fake)
-                loss_D = 0.5 * (loss_real + loss_fake)
+                loss_D = desc_loss(pred_real, pred_fake)
 
             writer.add_scalar('Loss/Generator_val', loss_G, batches_done)
             writer.add_scalar('Loss/Descriminator_val', loss_D, batches_done)
