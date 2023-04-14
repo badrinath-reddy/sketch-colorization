@@ -35,7 +35,7 @@ os.makedirs("saved_models/%s" % opt.model_name, exist_ok=True)
 device = get_device()
 
 # Loss functions
-criterion_GAN = bce()
+criterion_GAN = l2()
 criterion_pixelwise = l1()
 
 # Loss weight of L1 pixel-wise loss between translated image and real image
