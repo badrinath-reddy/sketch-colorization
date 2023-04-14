@@ -207,3 +207,6 @@ for epoch in range(opt.epoch, opt.n_epochs):
         # Save model checkpoints
         torch.save(generator.state_dict(),"saved_models/%s/generator_%d.pth" % (opt.model_name, epoch))
         torch.save(discriminator.state_dict(), "saved_models/%s/discriminator_%d.pth" % (opt.model_name, epoch))
+
+torch.save(generator.state_dict(),"saved_models/%s/generator_final.pth" % (opt.model_name))
+torch.save(discriminator.state_dict(), "saved_models/%s/discriminator_final.pth" % (opt.model_name))
