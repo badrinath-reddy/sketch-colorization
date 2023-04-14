@@ -24,7 +24,7 @@ parser.add_argument("--n_cpu", type=int, default=8, help="number of cpu threads 
 parser.add_argument("--img_height", type=int, default=256, help="size of image height")
 parser.add_argument("--img_width", type=int, default=256, help="size of image width")
 parser.add_argument("--channels", type=int, default=3, help="number of image channels")
-parser.add_argument("--sample_interval", type=int, default=100, help="interval between sampling of images from generators")
+parser.add_argument("--sample_interval", type=int, default=200, help="interval between sampling of images from generators")
 parser.add_argument("--checkpoint_interval", type=int, default=5, help="interval between model checkpoints")
 opt = parser.parse_args()
 print(opt)
