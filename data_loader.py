@@ -75,8 +75,6 @@ class Data(Dataset):
         # img = normalize_img(img)
         # label = normalize_label(label)
         
-        print(img.max(), img.min(), label.max(), label.min())
-
         if self.transform and self.split == "train":
             img, label = self.transform(img, label)
 

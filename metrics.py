@@ -1,9 +1,6 @@
 from utils import get_device, denormalize
 import piqa
 import torch
-import os
-# os set env
-os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 
 device = get_device()
 
