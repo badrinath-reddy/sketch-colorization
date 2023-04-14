@@ -5,6 +5,7 @@ import datetime
 import sys
 from models.pix2pix import *
 from data_loader import *
+from metrics import *
 from torchvision.utils import save_image
 import torch
 from torch.utils.tensorboard import SummaryWriter
@@ -24,7 +25,7 @@ parser.add_argument("--img_height", type=int, default=256, help="size of image h
 parser.add_argument("--img_width", type=int, default=256, help="size of image width")
 parser.add_argument("--channels", type=int, default=3, help="number of image channels")
 parser.add_argument("--sample_interval", type=int, default=100, help="interval between sampling of images from generators")
-parser.add_argument("--checkpoint_interval", type=int, default=1, help="interval between model checkpoints")
+parser.add_argument("--checkpoint_interval", type=int, default=5, help="interval between model checkpoints")
 opt = parser.parse_args()
 print(opt)
 
@@ -34,8 +35,8 @@ os.makedirs("saved_models/%s" % opt.model_name, exist_ok=True)
 device = get_device()
 
 # Loss functions
-criterion_GAN = torch.nn.MSELoss()
-criterion_pixelwise = torch.nn.L1Loss()
+criterion_GAN = bce()
+criterion_pixelwise = l1()
 
 # Loss weight of L1 pixel-wise loss between translated image and real image
 lambda_pixel = 100
@@ -49,8 +50,6 @@ writer = SummaryWriter()
 
 generator = generator.to(device)
 discriminator = discriminator.to(device)
-criterion_GAN.to(device)
-criterion_pixelwise.to(device)
 
 
 if opt.epoch != 0:
@@ -75,6 +74,9 @@ def sample_images(batches_done):
     real_A = real_A.to(device)
     real_B = real_B.to(device)
     fake_B = generator(real_A)
+    real_A = denormalize(real_A)
+    real_B = denormalize(real_B)
+    fake_B = denormalize(fake_B)
     img_sample = torch.cat((real_A.data, fake_B.data, real_B.data), -2)
     save_image(img_sample, "images/%s/%s.png" % (opt.model_name, batches_done), nrow=5, normalize=True)
 
@@ -173,27 +175,27 @@ for epoch in range(opt.epoch, opt.n_epochs):
         if batches_done % opt.sample_interval == 0:
             writer.add_scalar('Loss/Generator', loss_G, batches_done)
             writer.add_scalar('Loss/Descriminator', loss_D, batches_done)
-            writer.add_images('Images/Input', real_A, batches_done)
-            writer.add_images('Images/Output', real_B, batches_done)
-            writer.add_images('Images/Generator', fake_B, batches_done)
+            writer.add_images('Images/Input', denormalize(real_A), batches_done)
+            writer.add_images('Images/Output', denormalize(real_B), batches_done)
+            writer.add_images('Images/Generator', denormalize(fake_B), batches_done)
             sample_images(batches_done)
 
-            # with torch.no_grad():
-            #     real_A, real_B = next(iter(val_dataloader))
-            #     real_A = real_A.to(device)
-            #     real_B = real_B.to(device)
+            with torch.no_grad():
+                real_A, real_B = next(iter(val_dataloader))
+                real_A = real_A.to(device)
+                real_B = real_B.to(device)
 
-            #     fake_B = generator(real_A)
-            #     pred_fake = discriminator(fake_B, real_A)
-            #     loss_GAN = criterion_GAN(pred_fake, valid)
-            #     loss_pixel = criterion_pixelwise(fake_B, real_B)
-            #     loss_G = loss_GAN + lambda_pixel * loss_pixel
+                fake_B = generator(real_A)
+                pred_fake = discriminator(fake_B, real_A)
+                loss_GAN = criterion_GAN(pred_fake, valid)
+                loss_pixel = criterion_pixelwise(fake_B, real_B)
+                loss_G = loss_GAN + lambda_pixel * loss_pixel
 
-            #     pred_real = discriminator(real_B, real_A)
-            #     loss_real = criterion_GAN(pred_real, valid)
-            #     pred_fake = discriminator(fake_B.detach(), real_A)
-            #     loss_fake = criterion_GAN(pred_fake, fake)
-            #     loss_D = 0.5 * (loss_real + loss_fake)
+                pred_real = discriminator(real_B, real_A)
+                loss_real = criterion_GAN(pred_real, valid)
+                pred_fake = discriminator(fake_B.detach(), real_A)
+                loss_fake = criterion_GAN(pred_fake, fake)
+                loss_D = 0.5 * (loss_real + loss_fake)
 
             writer.add_scalar('Loss/Generator_val', loss_G, batches_done)
             writer.add_scalar('Loss/Descriminator_val', loss_D, batches_done)

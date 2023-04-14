@@ -16,7 +16,7 @@ for folder in folders:
         if file == '.DS_Store':
             continue
         img = cv2.imread(DATA_FOLDER + '/' + folder + '/' + file)
-        img = cv2.resize(img, (IMG_SIZE, IMG_SIZE))
+        img = cv2.resize(img, (IMG_SIZE, IMG_SIZE), interpolation=cv2.INTER_AREA)
         original_img, img = edge_detection(img)
         img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
 
@@ -24,21 +24,21 @@ for folder in folders:
 
         cv2.imwrite(DATA_FOLDER + '/' + PROCESSED_FOLDER + '/' + str(i) + '.jpg', final_img)
 
-all_idx = [str(i) + ".jpg" for i in range(1, i + 1)]
+# all_idx = [str(i) + ".jpg" for i in range(1, i + 1)]
 
-random.shuffle(all_idx)
-train_idx = all_idx[:int(0.8 * i)]
-test_idx = all_idx[int(0.8 * i):int(0.9 * i)]
-val_idx = all_idx[int(0.9 * i):]
+# random.shuffle(all_idx)
+# train_idx = all_idx[:int(0.8 * i)]
+# test_idx = all_idx[int(0.8 * i):int(0.9 * i)]
+# val_idx = all_idx[int(0.9 * i):]
 
-with open(DATA_FOLDER + '/' + PROCESSED_FOLDER + '/' + 'train.txt', 'w') as f:
-    f.write(str(train_idx))
+# with open(DATA_FOLDER + '/' + PROCESSED_FOLDER + '/' + 'train.txt', 'w') as f:
+#     f.write(str(train_idx))
 
-with open(DATA_FOLDER + '/' + PROCESSED_FOLDER + '/' + 'test.txt', 'w') as f:
-    f.write(str(test_idx))
+# with open(DATA_FOLDER + '/' + PROCESSED_FOLDER + '/' + 'test.txt', 'w') as f:
+#     f.write(str(test_idx))
 
-with open(DATA_FOLDER + '/' + PROCESSED_FOLDER + '/' + 'val.txt', 'w') as f:
-    f.write(str(val_idx))
+# with open(DATA_FOLDER + '/' + PROCESSED_FOLDER + '/' + 'val.txt', 'w') as f:
+#     f.write(str(val_idx))
 
 
 print('Data extraction completed successfully')

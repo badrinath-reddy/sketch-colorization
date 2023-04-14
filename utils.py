@@ -20,5 +20,4 @@ def weights_init_normal(m):
 
 
 def denormalize(img):
-    img = (img * 0.5 + 0.5)
-    return img
+    return img * 0.5 + 0.5

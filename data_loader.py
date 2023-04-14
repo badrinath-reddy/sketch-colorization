@@ -1,10 +1,13 @@
 from torch.utils.data import DataLoader
 from torch.utils.data import Dataset
 from torchvision import transforms
-from const import DATA_FOLDER, PROCESSED_FOLDER, IMG_SIZE, TRAIN_FILE, TEST_FILE, VAL_FILE
+from const import DATA_FOLDER, PROCESSED_FOLDER, IMG_SIZE, TRAIN_FILE, TEST_FILE, VAL_FILE, MEAN_INP, SD_INP, MEAN_OUT, SD_OUT
 import cv2
 import random
 import torchvision.transforms.functional as TF
+from utils import get_device
+
+device = get_device()
 
 class Data(Dataset):
     def __init__(self, split="train"):
@@ -50,20 +53,34 @@ class Data(Dataset):
     def __getitem__(self, idx):
         full_image = cv2.imread(self.files[idx])
         img = full_image[:, IMG_SIZE:]
-        label = full_image[:, :IMG_SIZE]
+        label = full_image[:, :IMG_SIZE]        
 
-        mandatory_transform = transforms.Compose([
+        standard_transform = transforms.Compose([
             transforms.ToPILImage(),
             transforms.ToTensor(),
-            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))])
+            transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))
+        ])
+        
+        # normalize_img = transforms.Compose([
+        #     transforms.Normalize(MEAN_INP, SD_INP)
+        # ])
+        
+        # normalize_label = transforms.Compose([
+        #     transforms.Normalize(MEAN_OUT, SD_OUT)
+        # ])
 
-        img = mandatory_transform(img)
-        label = mandatory_transform(label)
+        img = standard_transform(img)
+        label = standard_transform(label)
+        
+        # img = normalize_img(img)
+        # label = normalize_label(label)
+        
+        print(img.max(), img.min(), label.max(), label.min())
 
         if self.transform and self.split == "train":
             img, label = self.transform(img, label)
 
-        return img, label
+        return img.to(device), label.to(device)
 
 
 def get_data_loader(batch_size, shuffle=True, split="train"):

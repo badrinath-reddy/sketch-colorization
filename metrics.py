@@ -1,21 +1,40 @@
-import numpy as np
-from skimage.metrics import structural_similarity
-import cv2
-from utils import denormalize
+from utils import get_device, denormalize
+import piqa
+import torch
+import os
+# os set env
+os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
 
+device = get_device()
 
-def ssim(img1, img2):
-    # denormalize
-    img1 = denormalize(img1) * 255
-    img2 = denormalize(img2) * 255
-    img1 = img1.permute(1, 2, 0).numpy().astype(np.uint8)
-    img2 = img2.permute(1, 2, 0).numpy().astype(np.uint8)
-    return structural_similarity(img1, img2, multichannel=True, channel_axis=2)
+# SSIM by Wang et al. (2004)
+# use 1.0 - ssim() to get the loss
+def ssim():
+    return piqa.SSIM().to(device)
 
+# Multi-scale SSIM by Wang et al. (2018)
+# use 1.0 - ms_ssim() to get the loss
+def ms_ssim():
+    return piqa.MS_SSIM().to(device)
 
-def psnr(img1, img2):
-    img1 = denormalize(img1) * 255
-    img2 = denormalize(img2) * 255
-    img1 = img1.permute(1, 2, 0).numpy()
-    img2 = img2.permute(1, 2, 0).numpy()
-    return cv2.PSNR(img1, img2)
+# PSNR by Simoncelli and Bovik (2003)
+# should be maximized
+def psnr():
+    return piqa.PSNR().to(device)
+
+# FID by Heusel et al. (2017)
+# should be minimized
+def fid():
+    return piqa.FID().to(device)
+
+# L1
+def l1():
+    return torch.nn.L1Loss().to(device)
+
+# L2
+def l2():
+    return torch.nn.MSELoss().to(device)
+
+# BCE
+def bce():
+    return torch.nn.BCELoss().to(device)
