@@ -8,6 +8,7 @@ data/
 images/
 test.ipynb
 .vscode/
+*DS_Store*
 
 # C extensions
 *.so
