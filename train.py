@@ -41,7 +41,7 @@ os.makedirs("saved_models/%s" % opt.model_name, exist_ok=True)
 device = get_device()
 
 # Loss functions
-gen_loss = GeneratorLoss()
+gen_loss = generator = MS_SSIM_L1_LOSS()
 desc_loss = DiscriminatorLoss()
 
 
@@ -115,7 +115,7 @@ for epoch in range(opt.epoch, opt.n_epochs):
         pred_fake = discriminator(fake_B, real_A)
 
         # Total loss
-        loss_G = gen_loss(fake_B, pred_fake, real_B)
+        loss_G = gen_loss(fake_B, real_B, pred_fake)
 
         loss_G.backward()
         
@@ -176,7 +176,7 @@ for epoch in range(opt.epoch, opt.n_epochs):
 
                 fake_B = generator(real_A)
                 pred_fake = discriminator(fake_B, real_A)
-                loss_G = gen_loss(fake_B, pred_fake, real_B)
+                loss_G = gen_loss(fake_B, real_B, pred_fake)
 
                 pred_real = discriminator(real_B, real_A)
                 loss_D = desc_loss(pred_real, pred_fake)
