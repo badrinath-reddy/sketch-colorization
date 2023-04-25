@@ -126,7 +126,7 @@ class MS_SSIM_L1_LOSS(nn.Module):
 
 
 class PerceptualLoss(torch.nn.Module):
-    def __init__(self, lambda_pixel=100):
+    def __init__(self, lambda_pixel=20):
         super(PerceptualLoss, self).__init__()
         self.l2 = l2()
         self.vgg_loss = VGGPerceptualLoss()
