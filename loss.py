@@ -6,6 +6,7 @@ import numpy as np
 from torch import pi
 import torch.nn.functional as F
 import torch.nn as nn
+from vgg_perceptual_loss import VGGPerceptualLoss
 
 
 # Simple generator loss
@@ -122,3 +123,18 @@ class MS_SSIM_L1_LOSS(nn.Module):
         loss_mix = self.compensation*loss_mix
 
         return (loss_mix.mean() + self.gen_loss(x, y, disc_out)) / 2
+
+
+class PerceptualLoss(torch.nn.Module):
+    def __init__(self, lambda_pixel=100):
+        super(PerceptualLoss, self).__init__()
+        self.loss = l2()
+        self.vgg_loss = VGGPerceptualLoss()
+        self.lambda_pixel = lambda_pixel
+        
+    def forward(self, gen_out, gt, disc_out):
+        gen_out = denormalize(gen_out)
+        gt = denormalize(gt)
+        ones = torch.ones_like(disc_out)
+        
+        return self.l2(ones, disc_out) + self.lambda_pixel * self.vgg_loss(gen_out, gt)
